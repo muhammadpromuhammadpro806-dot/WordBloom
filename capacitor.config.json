@@ -1,0 +1,13 @@
+{
+  "appId": "com.wordbloom.game",
+  "appName": "WordBloom",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "AdMob": {
+      "appId": "ca-app-pub-2701121470969867~2206938115"
+    }
+  }
+}
