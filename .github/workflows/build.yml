@@ -1,0 +1,31 @@
+name: Build WordBloom APK
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Install dependencies
+        run: npm install
+      - name: Setup www
+        run: mkdir -p www && cp wordbloom_v3_final.html www/index.html
+      - name: Add Android
+        run: npx cap add android || true
+      - name: Sync
+        run: npx cap sync android
+      - name: Build APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: wordbloom-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
