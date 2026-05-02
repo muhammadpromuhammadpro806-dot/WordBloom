@@ -2018,13 +2018,21 @@ function setForgot(t){
 function doForgot(){
   const v=document.getElementById('fgEmail').value.trim();
   if(!v){toast('Please enter your email!','b');return;}
-  toast('Sending...','i');
-  setTimeout(()=>{
+  // Check if user exists in Firebase
+  const fbKey=DB._fbKey(v);
+  toast('Checking...','i');
+  fdb.ref('users/'+fbKey).once('value').then(function(snap){
     const ok=document.getElementById('fgOk');
-    ok.textContent=fgType==='p'?'✅ Reset link sent! Check your inbox.':'✅ Username reminder sent!';
+    if(!snap.val()){
+      toast('No account found with this email.','b');
+      return;
+    }
+    ok.textContent=fgType==='p'?'✅ Please contact support to reset your password.':'✅ Your username: '+snap.val().username;
     ok.classList.add('show'); sfx('correct');
-    setTimeout(()=>closeModal('mForgot'),2400);
-  },900);
+    setTimeout(()=>closeModal('mForgot'),2800);
+  }).catch(function(){
+    toast('Something went wrong. Try again.','b');
+  });
 }
 
 // ══════════════════════════════
@@ -2203,7 +2211,9 @@ function doContact(){
     from: u ? (u.username || u.name) : 'Guest',
     email: u ? u.email : 'unknown',
     ts: Date.now(),
-    date: new Date().toLocaleString()
+    date: new Date().toLocaleString(),
+    type: 'contact',
+    appVersion: '2.0'
   };
   // Send to Firebase
   fdb.ref('contacts').push(entry)
@@ -3611,6 +3621,10 @@ function watchAdForCoins(){
 }
 
 function watchAdForHint(){
+  // Watch Ad for hint removed — just show coins option
+  closeModal('mHintCoin');
+  useHint();
+  return;
   if(!IS_NATIVE || !adMobPlugin){
     closeModal('mHintCoin');
     showNoAdMessage();
@@ -3877,6 +3891,72 @@ function tutOnSubmit(){
     setTimeout(function(){ tutNext(); },500);
   }
 }
+
+
+// ══════════════════════════════
+// SHOP MISSING FUNCTIONS
+// ══════════════════════════════
+function openShop(){
+  sfx('tap');
+  const u=CU();
+  document.getElementById('shopBalEl').textContent=u?u.coins||0:0;
+  refreshShop();
+  go('pgShop');
+}
+
+var _shopPayIdx=0;
+var _shopPayMethod=1;
+
+function openShopPay(index){
+  sfx('tap');
+  _shopPayIdx=index;
+  _shopPayMethod=1;
+  // Reset states
+  document.getElementById('payDefault').style.display='block';
+  document.getElementById('payProcessing').style.display='none';
+  document.getElementById('paySuccess').style.display='none';
+  selPay(1);
+  openModal('mShopPay');
+}
+
+function closeShopPay(){
+  closeModal('mShopPay');
+}
+
+function selPay(n){
+  _shopPayMethod=n;
+  [1,2,3].forEach(function(i){
+    var pm=document.getElementById('pm'+i);
+    var pmr=document.getElementById('pmr'+i);
+    if(pm) pm.classList.toggle('sel',i===n);
+    if(pmr){
+      pmr.style.background=i===n?'var(--gold)':'';
+      pmr.style.borderColor=i===n?'var(--gold)':'var(--bd)';
+    }
+  });
+  sfx('tap');
+}
+
+function confirmShopPay(){
+  sfx('tap');
+  document.getElementById('payDefault').style.display='none';
+  var proc=document.getElementById('payProcessing');
+  proc.style.display='flex';
+  // Fake payment — 2 seconds processing
+  setTimeout(function(){
+    completePurchase(_shopPayIdx);
+    proc.style.display='none';
+    var succ=document.getElementById('paySuccess');
+    succ.style.display='flex';
+    sfx('coin');
+    bigBurst();
+  },2000);
+}
+
+// ══════════════════════════════
+// TUTORIAL SKIP ALIAS
+// ══════════════════════════════
+function skipTutorial(){ tutSkip(); }
 
 loadAudioPrefs();
 initAdMob();
