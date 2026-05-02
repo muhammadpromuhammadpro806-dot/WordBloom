@@ -1,31 +1,43 @@
 name: Build WordBloom APK
+
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+
       - name: Install dependencies
         run: npm install
+
       - name: Setup www
-        run: mkdir -p www && cp wordbloom_v3_final.html www/index.html
+        run: mkdir -p www && cp index.html www/index.html
+
       - name: Add Android
         run: npx cap add android || true
+
       - name: Remove bad Java path from gradle.properties
         run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
+
       - name: Sync
         run: npx cap sync android
+
       - name: Build APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
