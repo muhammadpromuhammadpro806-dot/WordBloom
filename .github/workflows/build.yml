@@ -26,6 +26,9 @@ jobs:
       - name: Setup www
         run: mkdir -p www && cp index.html www/index.html
 
+      - name: Init Capacitor
+        run: npx cap init WordBloom com.wordbloom.puzzle --web-dir www
+
       - name: Add Android
         run: npx cap add android || true
 
