@@ -26,19 +26,22 @@ jobs:
       - name: Setup www
         run: mkdir -p www && cp index.html www/index.html
 
-      - name: Init Capacitor
+      - name: Remove old android folder completely
+        run: rm -rf android
+
+      - name: Init Capacitor fresh
         run: npx cap init WordBloom com.wordbloom.puzzle --web-dir www
 
-      - name: Add Android
-        run: npx cap add android || true
-
-      - name: Remove bad Java path from gradle.properties
-        run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
+      - name: Add Android fresh
+        run: npx cap add android
 
       - name: Sync
         run: npx cap sync android
 
-      - name: Generate JKS keystore (Java 17 compatible)
+      - name: Remove bad Java path from gradle.properties
+        run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
+
+      - name: Generate JKS keystore
         run: |
           keytool -genkey -v \
             -keystore android/app/wordbloom.jks \
@@ -50,8 +53,6 @@ jobs:
             -storepass shafiq123 \
             -keypass shafiq123 \
             -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
-          echo "Keystore created!"
-          keytool -list -keystore android/app/wordbloom.jks -storepass shafiq123
 
       - name: Configure signing in build.gradle
         run: |
