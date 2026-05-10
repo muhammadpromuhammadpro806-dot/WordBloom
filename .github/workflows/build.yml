@@ -26,13 +26,13 @@ jobs:
       - name: Setup www
         run: mkdir -p www && cp index.html www/index.html
 
-      - name: Remove old android folder completely
+      - name: Remove old android folder
         run: rm -rf android
 
-      - name: Init Capacitor fresh
+      - name: Init Capacitor
         run: npx cap init WordBloom com.wordbloom.puzzle --web-dir www
 
-      - name: Add Android fresh
+      - name: Add Android
         run: npx cap add android
 
       - name: Sync
@@ -41,13 +41,24 @@ jobs:
       - name: Remove bad Java path
         run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
 
-      - name: Decode keystore from secret
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/wordbloom.jks
+      - name: Generate keystore
+        run: |
+          keytool -genkey -v \
+            -keystore android/app/wordbloom.jks \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -alias wordbloom \
+            -storetype JKS \
+            -storepass shafiq123 \
+            -keypass shafiq123 \
+            -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
+          echo "=== KEYSTORE SHA1 FINGERPRINT ==="
+          keytool -list -keystore android/app/wordbloom.jks -storepass shafiq123 | grep SHA1
+          echo "=== SAVE THIS BASE64 AS SECRET ==="
+          base64 android/app/wordbloom.jks
 
-      - name: Verify keystore
-        run: keytool -list -keystore android/app/wordbloom.jks -storepass shafiq123 -v | grep SHA1
-
-      - name: Configure signing in build.gradle
+      - name: Configure signing
         run: |
           cat >> android/app/build.gradle << 'GRADLE'
 
