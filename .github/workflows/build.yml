@@ -38,7 +38,7 @@ jobs:
       - name: Sync
         run: npx cap sync android
 
-      - name: Generate fresh keystore with Java 17
+      - name: Generate JKS keystore (Java 17 compatible)
         run: |
           keytool -genkey -v \
             -keystore android/app/wordbloom.jks \
@@ -47,28 +47,43 @@ jobs:
             -validity 10000 \
             -alias wordbloom \
             -storetype JKS \
-            -storepass ${{ secrets.KEYSTORE_PASSWORD }} \
-            -keypass ${{ secrets.KEY_PASSWORD }} \
+            -storepass shafiq123 \
+            -keypass shafiq123 \
             -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
+          echo "Keystore created!"
+          keytool -list -keystore android/app/wordbloom.jks -storepass shafiq123
+
+      - name: Configure signing in build.gradle
+        run: |
+          cat >> android/app/build.gradle << 'GRADLE'
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("wordbloom.jks")
+                      storePassword "shafiq123"
+                      keyAlias "wordbloom"
+                      keyPassword "shafiq123"
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          GRADLE
 
       - name: Build Release AAB
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/wordbloom.jks \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=wordbloom \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+          ./gradlew bundleRelease
 
       - name: Build Release APK
         run: |
           cd android
-          ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/wordbloom.jks \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=wordbloom \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+          ./gradlew assembleRelease
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
