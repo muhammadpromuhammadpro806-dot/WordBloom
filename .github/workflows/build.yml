@@ -41,32 +41,47 @@ jobs:
       - name: Decode Keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/wordbloom.jks
 
-      - name: Build Release AAB (for Play Store)
+      - name: Convert Keystore to compatible format
+        run: |
+          keytool -importkeystore \
+            -srckeystore android/app/wordbloom.jks \
+            -destkeystore android/app/wordbloom_compat.jks \
+            -deststoretype JKS \
+            -srcstorepass ${{ secrets.KEYSTORE_PASSWORD }} \
+            -deststorepass ${{ secrets.KEYSTORE_PASSWORD }} \
+            -srcalias wordbloom \
+            -destalias wordbloom \
+            -srckeypass ${{ secrets.KEY_PASSWORD }} \
+            -destkeypass ${{ secrets.KEY_PASSWORD }} \
+            -noprompt || true
+          cp android/app/wordbloom_compat.jks android/app/wordbloom_final.jks 2>/dev/null || cp android/app/wordbloom.jks android/app/wordbloom_final.jks
+
+      - name: Build Release AAB
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/wordbloom.jks \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/wordbloom_final.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.alias=wordbloom \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
-      - name: Build Release APK (for phone testing)
+      - name: Build Release APK
         run: |
           cd android
           ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/wordbloom.jks \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/wordbloom_final.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.alias=wordbloom \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload AAB (Play Store)
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: WordBloom-Release-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
 
-      - name: Upload APK (Testing)
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: wordbloom-apk
