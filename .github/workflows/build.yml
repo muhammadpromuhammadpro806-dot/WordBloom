@@ -41,7 +41,7 @@ jobs:
       - name: Remove bad Java path
         run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
 
-      - name: Generate keystore
+      - name: Generate keystore and show info
         run: |
           keytool -genkey -v \
             -keystore android/app/wordbloom.jks \
@@ -53,9 +53,9 @@ jobs:
             -storepass shafiq123 \
             -keypass shafiq123 \
             -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
-          echo "=== KEYSTORE SHA1 FINGERPRINT ==="
-          keytool -list -keystore android/app/wordbloom.jks -storepass shafiq123 | grep SHA1
-          echo "=== SAVE THIS BASE64 AS SECRET ==="
+          echo "=== KEYSTORE FINGERPRINT ==="
+          keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 -alias wordbloom 2>/dev/null || keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123
+          echo "=== BASE64 OF KEYSTORE ==="
           base64 android/app/wordbloom.jks
 
       - name: Configure signing
