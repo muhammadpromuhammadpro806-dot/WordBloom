@@ -30,7 +30,7 @@ jobs:
         run: rm -rf android
 
       - name: Init Capacitor
-        run: npx cap init WordBloom com.wordbloom.puzzle --web-dir www
+        run: npx cap init WordBloom com.wordbloom.words --web-dir www
 
       - name: Add Android
         run: npx cap add android
@@ -44,8 +44,8 @@ jobs:
       - name: Decode keystore from secret
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/wordbloom.jks
-          echo "=== SHA1 of this keystore ==="
-          keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:" || echo "Cannot read keystore"
+          echo "=== SHA1 ==="
+          keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:"
 
       - name: Configure signing
         run: |
