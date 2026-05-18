@@ -41,7 +41,7 @@ jobs:
       - name: Remove bad Java path
         run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
 
-      - name: Update SDK and version code
+      - name: Update SDK and version
         run: |
           sed -i 's/targetSdkVersion 33/targetSdkVersion 35/g' android/app/build.gradle
           sed -i 's/targetSdk 33/targetSdk 35/g' android/app/build.gradle
@@ -49,10 +49,8 @@ jobs:
           sed -i 's/compileSdk 33/compileSdk 35/g' android/app/build.gradle
           sed -i 's/versionCode 1/versionCode 2/g' android/app/build.gradle
           sed -i 's/versionName "1.0"/versionName "1.0.1"/g' android/app/build.gradle
-          echo "=== Version info ==="
-          grep -E "versionCode|versionName|targetSdk|compileSdk" android/app/build.gradle
 
-      - name: Generate keystore
+      - name: Generate keystore and save base64
         run: |
           keytool -genkey -v \
             -keystore android/app/wordbloom.jks \
@@ -66,6 +64,10 @@ jobs:
             -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
           echo "=== SHA1 ==="
           keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:"
+          echo "=== BASE64 - COPY THIS AND SAVE AS KEYSTORE_BASE64 SECRET ==="
+          base64 -w 0 android/app/wordbloom.jks
+          echo ""
+          echo "=== END BASE64 ==="
 
       - name: Configure signing
         run: |
