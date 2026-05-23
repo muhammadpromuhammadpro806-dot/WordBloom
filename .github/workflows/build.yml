@@ -48,10 +48,19 @@ jobs:
           sed -i 's/compileSdkVersion 33/compileSdkVersion 35/g' android/app/build.gradle
           sed -i 's/compileSdk 33/compileSdk 35/g' android/app/build.gradle
 
-      - name: Decode keystore from secret
+      - name: Generate keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/wordbloom.jks
-          echo "=== SHA1 of saved keystore ==="
+          keytool -genkey -v \
+            -keystore android/app/wordbloom.jks \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -alias wordbloom \
+            -storetype JKS \
+            -storepass shafiq123 \
+            -keypass shafiq123 \
+            -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
+          echo "=== SHA1 ==="
           keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:"
 
       - name: Configure signing
