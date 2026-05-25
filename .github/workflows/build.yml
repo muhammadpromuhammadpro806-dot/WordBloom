@@ -41,17 +41,6 @@ jobs:
       - name: Remove bad Java path
         run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
 
-      - name: Force API 35 and version code 2
-        run: |
-          sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 35/g' android/app/build.gradle
-          sed -i 's/compileSdk [0-9]*/compileSdk 35/g' android/app/build.gradle
-          sed -i 's/targetSdkVersion [0-9]*/targetSdkVersion 35/g' android/app/build.gradle
-          sed -i 's/targetSdk [0-9]*/targetSdk 35/g' android/app/build.gradle
-          sed -i 's/versionCode [0-9]*/versionCode 2/g' android/app/build.gradle
-          sed -i 's/versionName "[^"]*"/versionName "1.0.1"/g' android/app/build.gradle
-          echo "=== Versions ==="
-          grep -E "compileSdk|targetSdk|versionCode|versionName" android/app/build.gradle
-
       - name: Generate keystore
         run: |
           keytool -genkey -v \
@@ -67,11 +56,24 @@ jobs:
           echo "=== SHA1 ==="
           keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:"
 
-      - name: Configure signing
+      - name: Update build.gradle with signing and API 35
         run: |
-          cat >> android/app/build.gradle << 'GRADLE'
-
-          android {
+          python3 << 'PYTHON'
+          import re
+          
+          with open('android/app/build.gradle', 'r') as f:
+              content = f.read()
+          
+          # Update SDK versions
+          content = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 35', content)
+          content = re.sub(r'compileSdk\s+\d+', 'compileSdk 35', content)
+          content = re.sub(r'targetSdkVersion\s+\d+', 'targetSdkVersion 35', content)
+          content = re.sub(r'targetSdk\s+\d+', 'targetSdk 35', content)
+          content = re.sub(r'versionCode\s+\d+', 'versionCode 2', content)
+          content = re.sub(r'versionName\s+"[^"]+"', 'versionName "1.0.1"', content)
+          
+          # Add signing config inside existing android block
+          signing_config = '''
               signingConfigs {
                   release {
                       storeFile file("wordbloom.jks")
@@ -80,13 +82,29 @@ jobs:
                       keyPassword "shafiq123"
                   }
               }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                  }
-              }
-          }
-          GRADLE
+          '''
+          
+          # Add signingConfig to release buildType
+          content = content.replace(
+              'release {',
+              'release {\n                signingConfig signingConfigs.release',
+              1
+          )
+          
+          # Insert signingConfigs before buildTypes
+          content = content.replace(
+              '    buildTypes {',
+              signing_config + '    buildTypes {',
+              1
+          )
+          
+          with open('android/app/build.gradle', 'w') as f:
+              f.write(content)
+          
+          print("build.gradle updated!")
+          PYTHON
+          echo "=== Versions ==="
+          grep -E "compileSdk|targetSdk|versionCode|versionName" android/app/build.gradle
 
       - name: Build Release AAB
         run: |
