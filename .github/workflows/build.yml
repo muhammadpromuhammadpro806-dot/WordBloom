@@ -30,7 +30,7 @@ jobs:
         run: rm -rf android
 
       - name: Init Capacitor
-        run: npx cap init WordBloom com.wordbloom.app --web-dir www
+        run: npx cap init WordBloom com.wordbloom.game1 --web-dir www
 
       - name: Add Android
         run: npx cap add android
@@ -55,24 +55,23 @@ jobs:
             -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
           echo "=== SHA1 ==="
           keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:"
+          echo "=== BASE64 START ==="
+          base64 -w 0 android/app/wordbloom.jks
+          echo ""
+          echo "=== BASE64 END ==="
 
       - name: Update build.gradle with signing and API 35
         run: |
           python3 << 'PYTHON'
           import re
-          
           with open('android/app/build.gradle', 'r') as f:
               content = f.read()
-          
-          # Update SDK versions
           content = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 35', content)
           content = re.sub(r'compileSdk\s+\d+', 'compileSdk 35', content)
           content = re.sub(r'targetSdkVersion\s+\d+', 'targetSdkVersion 35', content)
           content = re.sub(r'targetSdk\s+\d+', 'targetSdk 35', content)
-          content = re.sub(r'versionCode\s+\d+', 'versionCode 2', content)
-          content = re.sub(r'versionName\s+"[^"]+"', 'versionName "1.0.1"', content)
-          
-          # Add signing config inside existing android block
+          content = re.sub(r'versionCode\s+\d+', 'versionCode 1', content)
+          content = re.sub(r'versionName\s+"[^"]+"', 'versionName "1.0.0"', content)
           signing_config = '''
               signingConfigs {
                   release {
@@ -83,28 +82,12 @@ jobs:
                   }
               }
           '''
-          
-          # Add signingConfig to release buildType
-          content = content.replace(
-              'release {',
-              'release {\n                signingConfig signingConfigs.release',
-              1
-          )
-          
-          # Insert signingConfigs before buildTypes
-          content = content.replace(
-              '    buildTypes {',
-              signing_config + '    buildTypes {',
-              1
-          )
-          
+          content = content.replace('release {', 'release {\n                signingConfig signingConfigs.release', 1)
+          content = content.replace('    buildTypes {', signing_config + '    buildTypes {', 1)
           with open('android/app/build.gradle', 'w') as f:
               f.write(content)
-          
-          print("build.gradle updated!")
+          print("Done!")
           PYTHON
-          echo "=== Versions ==="
-          grep -E "compileSdk|targetSdk|versionCode|versionName" android/app/build.gradle
 
       - name: Build Release AAB
         run: |
