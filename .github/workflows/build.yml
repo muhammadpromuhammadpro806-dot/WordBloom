@@ -41,11 +41,36 @@ jobs:
       - name: Remove bad Java path
         run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
 
-      - name: Decode keystore from secret
+      - name: Use or generate keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/wordbloom.jks
+          if [ -f "keystore/wordbloom.jks" ]; then
+            echo "Using saved keystore from repo!"
+            cp keystore/wordbloom.jks android/app/wordbloom.jks
+          else
+            echo "Generating new keystore..."
+            mkdir -p keystore
+            keytool -genkey -v \
+              -keystore android/app/wordbloom.jks \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -alias wordbloom \
+              -storetype JKS \
+              -storepass shafiq123 \
+              -keypass shafiq123 \
+              -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
+            cp android/app/wordbloom.jks keystore/wordbloom.jks
+          fi
           echo "=== SHA1 ==="
           keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:"
+
+      - name: Save keystore to repo
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add keystore/wordbloom.jks || true
+          git diff --staged --quiet || git commit -m "Save keystore" || true
+          git push || true
 
       - name: Update build.gradle
         run: |
@@ -72,7 +97,6 @@ jobs:
           content = content.replace('    buildTypes {', signing + '    buildTypes {', 1)
           with open('android/app/build.gradle', 'w') as f:
               f.write(content)
-          print("Done!")
           print("targetSdk:", re.findall(r'targetSdk\s+\d+', content))
           PYTHON
 
