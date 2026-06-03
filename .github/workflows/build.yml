@@ -44,7 +44,7 @@ jobs:
       - name: Use or generate keystore
         run: |
           if [ -f "keystore/wordbloom.jks" ]; then
-            echo "Using saved keystore from repo!"
+            echo "Using saved keystore!"
             cp keystore/wordbloom.jks android/app/wordbloom.jks
           else
             echo "Generating new keystore..."
@@ -72,33 +72,39 @@ jobs:
           git diff --staged --quiet || git commit -m "Save keystore" || true
           git push || true
 
-      - name: Update build.gradle
+      - name: Force API 35 in build.gradle
         run: |
-          python3 - << 'PYTHON'
-          import re
-          with open('android/app/build.gradle', 'r') as f:
-              content = f.read()
-          content = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 35', content)
-          content = re.sub(r'compileSdk\s+\d+', 'compileSdk 35', content)
-          content = re.sub(r'targetSdkVersion\s+\d+', 'targetSdkVersion 35', content)
-          content = re.sub(r'targetSdk\s+\d+', 'targetSdk 35', content)
-          content = re.sub(r'versionCode\s+\d+', 'versionCode 1', content)
-          signing = '''
-              signingConfigs {
-                  release {
-                      storeFile file("wordbloom.jks")
-                      storePassword "shafiq123"
-                      keyAlias "wordbloom"
-                      keyPassword "shafiq123"
-                  }
+          echo "=== Before ==="
+          grep -E "compileSdk|targetSdk|minSdk|versionCode" android/app/build.gradle
+          
+          # Use awk to replace values properly
+          awk '{
+            gsub(/compileSdkVersion [0-9]+/, "compileSdkVersion 35");
+            gsub(/compileSdk [0-9]+/, "compileSdk 35");
+            gsub(/targetSdkVersion [0-9]+/, "targetSdkVersion 35");
+            gsub(/targetSdk [0-9]+/, "targetSdk 35");
+            gsub(/minSdkVersion [0-9]+/, "minSdkVersion 22");
+            gsub(/minSdk [0-9]+/, "minSdk 22");
+            print
+          }' android/app/build.gradle > /tmp/build.gradle.tmp
+          mv /tmp/build.gradle.tmp android/app/build.gradle
+          
+          echo "=== After ==="
+          grep -E "compileSdk|targetSdk|minSdk|versionCode" android/app/build.gradle
+
+      - name: Add signing config to build.gradle
+        run: |
+          cat >> android/app/build.gradle << 'GRADLE'
+          android.signingConfigs {
+              release {
+                  storeFile = file("wordbloom.jks")
+                  storePassword = "shafiq123"
+                  keyAlias = "wordbloom"
+                  keyPassword = "shafiq123"
               }
-          '''
-          content = content.replace('release {', 'release {\n                signingConfig signingConfigs.release', 1)
-          content = content.replace('    buildTypes {', signing + '    buildTypes {', 1)
-          with open('android/app/build.gradle', 'w') as f:
-              f.write(content)
-          print("targetSdk:", re.findall(r'targetSdk\s+\d+', content))
-          PYTHON
+          }
+          android.buildTypes.release.signingConfig = android.signingConfigs.release
+          GRADLE
 
       - name: Build Release AAB
         run: |
