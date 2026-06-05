@@ -72,25 +72,28 @@ jobs:
           git diff --staged --quiet || git commit -m "Save keystore" || true
           git push || true
 
-      - name: Force API 35 in build.gradle
+      - name: Force API 35 in variables file
         run: |
-          echo "=== Before ==="
-          grep -E "compileSdk|targetSdk|minSdk|versionCode" android/app/build.gradle
+          echo "=== Finding variables file ==="
+          find android -name "*.gradle" | xargs grep -l "compileSdkVersion\|compileSdk\|targetSdk" 2>/dev/null
+          echo "=== variables.gradle content ==="
+          cat android/variables.gradle 2>/dev/null || echo "no variables.gradle"
+          cat android/build.gradle 2>/dev/null | head -40
           
-          # Use awk to replace values properly
-          awk '{
-            gsub(/compileSdkVersion [0-9]+/, "compileSdkVersion 35");
-            gsub(/compileSdk [0-9]+/, "compileSdk 35");
-            gsub(/targetSdkVersion [0-9]+/, "targetSdkVersion 35");
-            gsub(/targetSdk [0-9]+/, "targetSdk 35");
-            gsub(/minSdkVersion [0-9]+/, "minSdkVersion 22");
-            gsub(/minSdk [0-9]+/, "minSdk 22");
-            print
-          }' android/app/build.gradle > /tmp/build.gradle.tmp
-          mv /tmp/build.gradle.tmp android/app/build.gradle
+          # Fix in variables.gradle
+          if [ -f "android/variables.gradle" ]; then
+            sed -i "s/compileSdkVersion = .*/compileSdkVersion = 35/" android/variables.gradle
+            sed -i "s/targetSdkVersion = .*/targetSdkVersion = 35/" android/variables.gradle
+            sed -i "s/compileSdk = .*/compileSdk = 35/" android/variables.gradle
+            sed -i "s/targetSdk = .*/targetSdk = 35/" android/variables.gradle
+            echo "=== After fixing variables.gradle ==="
+            cat android/variables.gradle
+          fi
           
-          echo "=== After ==="
-          grep -E "compileSdk|targetSdk|minSdk|versionCode" android/app/build.gradle
+          # Also fix in build.gradle
+          sed -i "s/compileSdkVersion = .*/compileSdkVersion = 35/" android/build.gradle
+          sed -i "s/targetSdkVersion = .*/targetSdkVersion = 35/" android/build.gradle
+          sed -i "s/minSdkVersion = .*/minSdkVersion = 22/" android/build.gradle
 
       - name: Add signing config to build.gradle
         run: |
