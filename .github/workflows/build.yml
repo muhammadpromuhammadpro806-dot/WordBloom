@@ -23,12 +23,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Fix Android SDK 35
+      - name: Install Android SDK 35
         run: |
-          # Delete corrupted android-35 and reinstall fresh
           rm -rf $ANDROID_HOME/platforms/android-35
-          sdkmanager --install "platforms;android-35"
-          echo "=== Verify android-35 ==="
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
           ls -la $ANDROID_HOME/platforms/android-35/android.jar
 
       - name: Install dependencies
@@ -51,6 +49,31 @@ jobs:
 
       - name: Remove bad Java path
         run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
+
+      - name: Upgrade Android Gradle Plugin to support SDK 35
+        run: |
+          echo "=== Before ==="
+          cat android/build.gradle | grep "com.android.tools.build"
+          
+          # Upgrade AGP from 8.0.0 to 8.3.0 which supports SDK 35
+          sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.3.0/" android/build.gradle
+          
+          # Also update gradle wrapper to 8.4
+          sed -i "s/gradle-[0-9.]*-all/gradle-8.4-all/" android/gradle/wrapper/gradle-wrapper.properties
+          
+          echo "=== After ==="
+          cat android/build.gradle | grep "com.android.tools.build"
+          cat android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Force API 35
+        run: |
+          if [ -f "android/variables.gradle" ]; then
+            sed -i "s/compileSdkVersion = .*/compileSdkVersion = 35/" android/variables.gradle
+            sed -i "s/targetSdkVersion = .*/targetSdkVersion = 35/" android/variables.gradle
+            sed -i "s/minSdkVersion = .*/minSdkVersion = 22/" android/variables.gradle
+            echo "=== variables.gradle ==="
+            cat android/variables.gradle
+          fi
 
       - name: Use or generate keystore
         run: |
@@ -82,16 +105,6 @@ jobs:
           git add keystore/wordbloom.jks || true
           git diff --staged --quiet || git commit -m "Save keystore" || true
           git push || true
-
-      - name: Force API 35
-        run: |
-          if [ -f "android/variables.gradle" ]; then
-            sed -i "s/compileSdkVersion = .*/compileSdkVersion = 35/" android/variables.gradle
-            sed -i "s/targetSdkVersion = .*/targetSdkVersion = 35/" android/variables.gradle
-            sed -i "s/minSdkVersion = .*/minSdkVersion = 22/" android/variables.gradle
-            echo "=== variables.gradle ==="
-            cat android/variables.gradle
-          fi
 
       - name: Add signing config
         run: |
