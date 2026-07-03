@@ -32,6 +32,47 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Bundle Firebase into HTML
+        run: |
+          # Download Firebase scripts
+          curl -s https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js -o /tmp/firebase-app.js
+          curl -s https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js -o /tmp/firebase-db.js
+          
+          echo "Firebase app size: $(wc -c < /tmp/firebase-app.js) bytes"
+          echo "Firebase db size: $(wc -c < /tmp/firebase-db.js) bytes"
+          
+          # Replace CDN script tags with inline bundled scripts
+          python3 - << PYTHON
+import re
+
+with open('index.html', 'r') as f:
+    html = f.read()
+
+with open('/tmp/firebase-app.js', 'r') as f:
+    app_js = f.read()
+
+with open('/tmp/firebase-db.js', 'r') as f:
+    db_js = f.read()
+
+# Replace the two CDN script tags with inline scripts
+old1 = '<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onerror="console.warn("firebase-app script failed to load")"></script>'
+old2 = '<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js" onerror="console.warn("firebase-database script failed to load")"></script>'
+
+new_scripts = '<script>' + app_js + '</script>
+<script>' + db_js + '</script>'
+
+html = html.replace(old1 + '
+' + old2, new_scripts)
+# Also try replacing separately if above fails
+html = html.replace(old1, '<script>' + app_js + '</script>')
+html = html.replace(old2, '<script>' + db_js + '</script>')
+
+with open('index.html', 'w') as f:
+    f.write(html)
+
+print('Firebase bundled! New size:', len(html), 'chars')
+PYTHON
+
       - name: Setup www
         run: mkdir -p www && cp index.html www/index.html
 
