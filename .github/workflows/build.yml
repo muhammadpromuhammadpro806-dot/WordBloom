@@ -32,7 +32,7 @@ jobs:
         run: npm install
 
       - name: Install In-App Purchases plugin
-        run: npm install @capacitor-community/in-app-purchases
+        run: npm install capacitor-plugin-cdv-purchase
 
       - name: Setup www
         run: mkdir -p www && cp index.html www/index.html
