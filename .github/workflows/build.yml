@@ -144,9 +144,28 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add keystore/wordbloom.jks || true
-          git diff --staged --quiet || git commit -m "Save keystore" || true
-          git push || true
+          git add keystore/wordbloom.jks
+          if git diff --staged --quiet; then
+            echo "Keystore already committed, nothing new to save."
+          else
+            git commit -m "Save keystore"
+            if ! git push; then
+              echo "âŒ FAILED: could not push keystore to repo."
+              echo "This is a CRITICAL failure â€” without this, the signing key will be lost on the next run."
+              exit 1
+            fi
+            echo "âœ… Keystore pushed successfully."
+          fi
+
+      - name: Export upload certificate for Play Console reset request
+        run: |
+          keytool -export -rfc \
+            -keystore android/app/wordbloom.jks \
+            -alias wordbloom \
+            -storepass shafiq123 \
+            -file upload_certificate.pem
+          echo "=== Certificate exported ==="
+          cat upload_certificate.pem
 
       - name: Add signing config
         run: |
@@ -184,3 +203,9 @@ jobs:
         with:
           name: wordbloom-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload certificate for Play Console upload key reset
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload_certificate
+          path: upload_certificate.pem
