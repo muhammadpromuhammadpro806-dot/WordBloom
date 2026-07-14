@@ -46,7 +46,7 @@ jobs:
       - name: Add Android
         run: npx cap add android
 
-      - name: Fix AndroidManifest â€” INTERNET, network config, AdMob, Billing permission
+      - name: Fix AndroidManifest - INTERNET, network config, AdMob, Billing permission
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           echo "=== Manifest before ==="
@@ -56,7 +56,7 @@ jobs:
             sed -i '/<manifest /a\    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' "$MANIFEST"
           fi
 
-          # Required for Google Play Billing â€” without this permission the
+          # Required for Google Play Billing - without this permission the
           # In-App Purchases plugin cannot open the Play Store payment sheet
           if ! grep -q "com.android.vending.BILLING" "$MANIFEST"; then
             sed -i '/<manifest /a\    <uses-permission android:name="com.android.vending.BILLING" />' "$MANIFEST"
@@ -80,7 +80,7 @@ jobs:
 
           # CRITICAL FIX: AdMob native SDK crashes the app on launch if this
           # meta-data tag is missing. This is the real cause of "opens for a
-          # split second then closes every time" â€” the app.
+          # split second then closes every time" - the app.
           if ! grep -q "com.google.android.gms.ads.APPLICATION_ID" "$MANIFEST"; then
             sed -i 's/<\/application>/    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-2701121470969867~8845536065" \/>\n    <\/application>/' "$MANIFEST"
           fi
@@ -150,11 +150,11 @@ jobs:
           else
             git commit -m "Save keystore"
             if ! git push; then
-              echo "âŒ FAILED: could not push keystore to repo."
-              echo "This is a CRITICAL failure â€” without this, the signing key will be lost on the next run."
+              echo "FAILED: could not push keystore to repo."
+              echo "This is a CRITICAL failure - without this, the signing key will be lost on the next run."
               exit 1
             fi
-            echo "âœ… Keystore pushed successfully."
+            echo "Keystore pushed successfully."
           fi
 
       - name: Export upload certificate for Play Console reset request
