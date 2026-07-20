@@ -46,6 +46,17 @@ jobs:
       - name: Add Android
         run: npx cap add android
 
+      - name: Generate app icon and splash screen
+        run: |
+          if [ -f "resources/icon.png" ]; then
+            echo "Found logo, generating icons and splash screens..."
+            npm install @capacitor/assets --save-dev
+            npx capacitor-assets generate --android
+          else
+            echo "No resources/icon.png found - skipping, app will use default Capacitor icon."
+            echo "To add a custom icon: commit a 1024x1024px PNG to resources/icon.png in the repo root."
+          fi
+
       - name: Fix AndroidManifest - INTERNET, network config, AdMob, Billing permission
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
