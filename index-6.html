@@ -1118,12 +1118,12 @@ z-index:0;}
   <div class="dailyDeal" onclick="buyPack(2)">
     <div style="font-size:2rem;">⚡</div>
     <div style="flex:1">
-      <div style="font-family:'Cinzel',serif;font-size:.88rem;color:#86efac;font-weight:900;margin-bottom:2px;">Daily Deal — Golden Pack</div>
-      <div style="font-size:.72rem;color:rgba(134,239,172,.7);">750 🪙 for just $3.99 · Best value today!</div>
+      <div style="font-family:'Cinzel',serif;font-size:.88rem;color:#86efac;font-weight:900;margin-bottom:2px;">Daily Deal - Golden Pack</div>
+      <div style="font-size:.72rem;color:rgba(134,239,172,.7);">1,200 🪙 for just $4.99 · Best value today!</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
       <div class="dealTimer" id="dealTimer">⏰ 23:59:59</div>
-      <div style="font-family:'Cinzel',serif;font-size:.9rem;color:white;font-weight:900;">$3.99</div>
+      <div style="font-family:'Cinzel',serif;font-size:.9rem;color:white;font-weight:900;">$4.99</div>
     </div>
   </div>
 
@@ -1161,7 +1161,7 @@ z-index:0;}
       <div class="shopPackInner">
         <div class="spLeft">
           <div class="spIco">💚</div>
-          <div class="spAmt">300 🪙</div>
+          <div class="spAmt">500 🪙</div>
           <div class="spBonus">+50 free</div>
         </div>
         <div class="spMid">
@@ -1170,19 +1170,19 @@ z-index:0;}
           <div class="spTags"><span class="spTag">Popular</span><span class="spTag">+Bonus</span></div>
         </div>
         <div class="spRight">
-          <div class="spPrice">$1.99</div>
+          <div class="spPrice">$2.99</div>
           <button class="spBtn">Buy</button>
         </div>
       </div>
     </div>
 
-    <!-- Golden — BEST VALUE -->
+    <!-- Golden - BEST VALUE -->
     <div class="shopPack sGold" onclick="buyPack(2)">
       <div class="bestBadge">⭐ Best Value</div>
       <div class="shopPackInner">
         <div class="spLeft">
           <div class="spIco">💛</div>
-          <div class="spAmt">750 🪙</div>
+          <div class="spAmt">1,200 🪙</div>
           <div class="spBonus">+150 free</div>
         </div>
         <div class="spMid">
@@ -1191,8 +1191,7 @@ z-index:0;}
           <div class="spTags"><span class="spTag">🔥 Top Pick</span><span class="spTag">+Bonus</span></div>
         </div>
         <div class="spRight">
-          <div class="spPrice">$3.99</div>
-          <div class="spOldPrice">$5.99</div>
+          <div class="spPrice">$4.99</div>
           <button class="spBtn">Buy</button>
         </div>
       </div>
@@ -1203,8 +1202,8 @@ z-index:0;}
       <div class="shopPackInner">
         <div class="spLeft">
           <div class="spIco">💜</div>
-          <div class="spAmt">1,500 🪙</div>
-          <div class="spBonus">+300 free</div>
+          <div class="spAmt">3,000 🪙</div>
+          <div class="spBonus">+500 free</div>
         </div>
         <div class="spMid">
           <div class="spName">Royal Pack</div>
@@ -1212,8 +1211,7 @@ z-index:0;}
           <div class="spTags"><span class="spTag">Premium</span><span class="spTag">+Bonus</span></div>
         </div>
         <div class="spRight">
-          <div class="spPrice">$6.99</div>
-          <div class="spOldPrice">$9.99</div>
+          <div class="spPrice">$9.99</div>
           <button class="spBtn">Buy</button>
         </div>
       </div>
@@ -1225,8 +1223,8 @@ z-index:0;}
       <div class="shopPackInner">
         <div class="spLeft">
           <div class="spIco">❤️</div>
-          <div class="spAmt">3,500 🪙</div>
-          <div class="spBonus">+1000 free</div>
+          <div class="spAmt">7,000 🪙</div>
+          <div class="spBonus">+1,500 free</div>
         </div>
         <div class="spMid">
           <div class="spName">Legend Pack</div>
@@ -1234,8 +1232,7 @@ z-index:0;}
           <div class="spTags"><span class="spTag">👑 Legend</span><span class="spTag">Best Bonus</span></div>
         </div>
         <div class="spRight">
-          <div class="spPrice">$14.99</div>
-          <div class="spOldPrice">$19.99</div>
+          <div class="spPrice">$19.99</div>
           <button class="spBtn">Buy</button>
         </div>
       </div>
@@ -1243,8 +1240,7 @@ z-index:0;}
 
     <div style="text-align:center;padding:10px 0 4px;font-size:.68rem;color:var(--dm2);line-height:1.7;">
       🔒 Secure payment via Google Play<br>
-      Coins added instantly to your account<br>
-      <span style="color:rgba(244,200,74,.4);">⚠️ Currently in Demo Mode — no real charge</span>
+      Coins added instantly to your account
     </div>
   </div>
 
@@ -1324,7 +1320,7 @@ z-index:0;}
     <div class="pSub" id="purchSub">Your coins have been added!</div>
     <div class="purchaseCoins">
       <span style="font-size:2rem;">🪙</span>
-      <div class="pcv" id="purchCoins">+750</div>
+      <div class="pcv" id="purchCoins">+0</div>
     </div>
     <div class="purchNewBal">New balance: <span id="purchNewBal">0</span> 🪙</div>
     <button class="bigBtn" onclick="go('pgHome');goHome()">🏠 Back to Home</button>
@@ -3592,56 +3588,132 @@ function buyPack(index){
 // as a native Android app with the plugin installed (see build.yml).
 // It's only available after Play Console products are activated matching
 // the productId strings in SHOP_PACKS above.
+// ══════════════════════════════
+// REAL GOOGLE PLAY BILLING — capacitor-plugin-cdv-purchase
+// ══════════════════════════════
+// This plugin exposes a global CdvPurchase namespace once installed via
+// npm and synced into the native Android project (see build.yml). It uses
+// an event-driven flow rather than a simple purchase() promise: you
+// register products once, then listen for approved -> verified -> finished
+// events as Google Play processes the transaction.
+let _iapStore = null;
+let _iapReady = false;
+let _pendingPurchaseIndex = null;
+
+function initIAP(){
+  if(!IS_NATIVE) return;
+  try {
+    if(typeof CdvPurchase === 'undefined'){
+      console.warn('CdvPurchase not available — billing plugin not loaded');
+      return;
+    }
+    _iapStore = CdvPurchase.store;
+    const { ProductType, Platform } = CdvPurchase;
+
+    // Register every coin pack as a consumable product (coins can be
+    // bought again and again, unlike a one-time unlock)
+    _iapStore.register(SHOP_PACKS.map(pack => ({
+      id: pack.productId,
+      type: ProductType.CONSUMABLE,
+      platform: Platform.GOOGLE_PLAY
+    })));
+
+    _iapStore.when()
+      .approved(transaction => {
+        // Google Play has approved the transaction — verify then finish
+        transaction.verify();
+      })
+      .verified(receipt => {
+        // Credit coins now that the purchase is confirmed genuine
+        creditPurchaseFromReceipt(receipt);
+        receipt.finish();
+      })
+      .finished(transaction => {
+        _pendingPurchaseIndex = null;
+        const btn = document.getElementById('payConfirmBtn');
+        if(btn){ btn.disabled=false; }
+      });
+
+    _iapStore.error(err => {
+      console.warn('Billing store error:', err);
+      // Only surface to the user if a purchase was actively in progress
+      if(_pendingPurchaseIndex !== null){
+        const pack = SHOP_PACKS[_pendingPurchaseIndex];
+        const btn = document.getElementById('payConfirmBtn');
+        if(btn && pack){ btn.disabled=false; btn.textContent='🔒 Buy for '+pack.price; }
+        _pendingPurchaseIndex = null;
+        toast('Purchase failed. Please try again.','b');
+      }
+    });
+
+    _iapStore.initialize([Platform.GOOGLE_PLAY]).then(() => {
+      _iapReady = true;
+    }).catch(err => {
+      console.warn('IAP store failed to initialize:', err);
+    });
+  } catch(e) {
+    console.warn('initIAP failed:', e);
+  }
+}
+
+function creditPurchaseFromReceipt(receipt){
+  // Find which pack this receipt's transaction matches by product id
+  const tx = receipt.transactions && receipt.transactions[0];
+  const productId = tx && tx.products && tx.products[0] && tx.products[0].id;
+  const pack = SHOP_PACKS.find(p => p.productId === productId);
+  if(!pack) return;
+  const u=CU();
+  if(!u) return;
+  const totalCoins=pack.coins+pack.bonus;
+  const newCoins=(u.coins||0)+totalCoins;
+  DB.upd(getSess(),{coins:newCoins});
+  addPurchHistory({...pack,coins:totalCoins});
+  saveToLeaderboard();
+
+  const ov=document.getElementById('payConfirmOv');
+  if(ov) ov.remove();
+  document.getElementById('purchIco').textContent=pack.ico;
+  document.getElementById('purchTitle').textContent='Purchase Complete!';
+  document.getElementById('purchSub').textContent=pack.name+(pack.bonus>0?' · +'+pack.bonus+' bonus coins!':'');
+  document.getElementById('purchCoins').textContent='+'+totalCoins.toLocaleString();
+  const nb=document.getElementById('purchNewBal');
+  if(nb) nb.textContent=newCoins.toLocaleString();
+  sfx('award'); bigBurst();
+  go('pgPurchase');
+}
+
 function completePurchase(index){
   const pack=SHOP_PACKS[index];
   if(!pack) return;
   const btn=document.getElementById('payConfirmBtn');
-  const iapPlugin = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppPurchases) || null;
 
-  if(!IS_NATIVE || !iapPlugin){
-    // Not running as a native app with billing available (e.g. testing
-    // in a browser) — cannot process a real purchase here.
+  if(!IS_NATIVE || !_iapStore || !_iapReady){
     toast('Purchases only work in the installed app from Google Play.','b');
     return;
   }
 
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Processing...'; }
+  const product = _iapStore.get(pack.productId, CdvPurchase.Platform.GOOGLE_PLAY);
+  if(!product || !product.getOffer()){
+    toast('This item is not available yet. Please try again shortly.','b');
+    return;
+  }
 
-  iapPlugin.purchaseProduct({ productId: pack.productId })
-    .then((result) => {
-      // Purchase confirmed by Google Play — now credit the coins
-      const ov=document.getElementById('payConfirmOv');
-      if(ov) ov.remove();
-      const u=CU();
-      if(!u) return;
-      const totalCoins=pack.coins+pack.bonus;
-      const newCoins=(u.coins||0)+totalCoins;
-      DB.upd(getSess(),{coins:newCoins});
-      addPurchHistory({...pack,coins:totalCoins});
-      saveToLeaderboard();
-      // Acknowledge/consume the purchase so it can be bought again later
-      // (coins are a consumable product, not a one-time unlock)
-      if(iapPlugin.consumePurchase && result && result.purchaseToken){
-        iapPlugin.consumePurchase({ purchaseToken: result.purchaseToken }).catch(()=>{});
-      }
-      document.getElementById('purchIco').textContent=pack.ico;
-      document.getElementById('purchTitle').textContent='Purchase Complete!';
-      document.getElementById('purchSub').textContent=pack.name+(pack.bonus>0?' · +'+pack.bonus+' bonus coins!':'');
-      document.getElementById('purchCoins').textContent='+'+totalCoins.toLocaleString();
-      const nb=document.getElementById('purchNewBal');
-      if(nb) nb.textContent=newCoins.toLocaleString();
-      sfx('award'); bigBurst();
-      go('pgPurchase');
-    })
-    .catch((err) => {
-      if(btn){ btn.disabled=false; btn.textContent='🔒 Buy for '+pack.price; }
-      if(err && err.code === 'USER_CANCELED'){
-        // User backed out of the Google Play payment sheet — no error toast needed
-        return;
-      }
-      toast('Purchase failed. Please try again.','b');
-      console.warn('Purchase error:', err);
-    });
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Processing...'; }
+  _pendingPurchaseIndex = index;
+
+  _iapStore.order(product.getOffer()).catch(err => {
+    if(btn){ btn.disabled=false; btn.textContent='🔒 Buy for '+pack.price; }
+    _pendingPurchaseIndex = null;
+    // User backing out of the Google Play payment sheet shouldn't show an
+    // error toast. Since the exact cancellation error code can vary by
+    // plugin version, check common indicators defensively rather than
+    // asserting one specific enum value.
+    const msg = (err && (err.message || '')).toLowerCase();
+    const isCancel = msg.includes('cancel') || (err && err.code === 6) || (CdvPurchase.ErrorCode && err && err.code === CdvPurchase.ErrorCode.PAYMENT_CANCELLED);
+    if(isCancel) return;
+    toast('Purchase failed. Please try again.','b');
+    console.warn('Purchase order error:', err);
+  });
 }
 
 
@@ -4139,6 +4211,11 @@ function skipTutorial(){ tutSkip(); }
 
 loadAudioPrefs();
 initAdMob();
+// Small delay before touching CdvPurchase — on native builds Capacitor
+// plugins are injected onto window very early, but the documented best
+// practice for this specific plugin is to avoid referencing it in the
+// very first tick in case of any native bridge timing edge cases.
+setTimeout(initIAP, 300);
 runSplash(() => {
   const su = CU();
   if (su) {
