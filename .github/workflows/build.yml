@@ -64,21 +64,21 @@ jobs:
           echo "=== Git commit info this build is running from ==="
           git log -1 --format="Commit: %H%nMessage: %s%nDate: %ad"
           echo ""
-          echo "=== md5 checksum of index.html in this build ==="
-          md5sum index.html
+          echo "=== md5 checksum of the actual file used in this build (www/index.html) ==="
+          md5sum www/index.html
           echo ""
           echo "=== Checking for the CORRECT fixed shop pricing text ==="
-          if grep -q 'spAmt">500' index.html; then
+          if grep -q 'spAmt">500' www/index.html; then
             echo "PASS: Found correct Bloom Pack amount (500 coins) - this build has the FIX."
           else
             echo "FAIL: Did NOT find 500 coins for Bloom Pack - this build is using an OLD or WRONG file!"
           fi
-          if grep -q 'spAmt">300' index.html; then
+          if grep -q 'spAmt">300' www/index.html; then
             echo "WARNING: Found OLD Bloom Pack amount (300 coins) still present somewhere in this file!"
           fi
           echo ""
-          echo "=== Actual Bloom Pack line(s) found in this exact build's index.html ==="
-          grep -n "Bloom Pack" -A3 index.html || echo "Bloom Pack text not found at all in this file!"
+          echo "=== Actual Bloom Pack line(s) found in this exact build's www/index.html ==="
+          grep -n "Bloom Pack" -A3 www/index.html || echo "Bloom Pack text not found at all in this file!"
 
       - name: Remove old android folder
         run: rm -rf android
@@ -166,8 +166,8 @@ jobs:
         run: |
           echo "=== Before ==="
           grep -E "versionCode|versionName" android/app/build.gradle
-          sed -i -E 's/versionCode [0-9]+/versionCode 7/' android/app/build.gradle
-          sed -i -E 's/versionName "[^"]*"/versionName "1.1.4"/' android/app/build.gradle
+          sed -i -E 's/versionCode [0-9]+/versionCode 8/' android/app/build.gradle
+          sed -i -E 's/versionName "[^"]*"/versionName "1.1.5"/' android/app/build.gradle
           echo "=== After ==="
           grep -E "versionCode|versionName" android/app/build.gradle
 
