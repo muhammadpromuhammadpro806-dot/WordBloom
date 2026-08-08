@@ -166,8 +166,8 @@ jobs:
         run: |
           echo "=== Before ==="
           grep -E "versionCode|versionName" android/app/build.gradle
-          sed -i -E 's/versionCode [0-9]+/versionCode 9/' android/app/build.gradle
-          sed -i -E 's/versionName "[^"]*"/versionName "1.1.6"/' android/app/build.gradle
+          sed -i -E 's/versionCode [0-9]+/versionCode 10/' android/app/build.gradle
+          sed -i -E 's/versionName "[^"]*"/versionName "1.1.7"/' android/app/build.gradle
           echo "=== After ==="
           grep -E "versionCode|versionName" android/app/build.gradle
 
@@ -245,6 +245,38 @@ jobs:
         run: |
           cd android
           ./gradlew assembleRelease
+
+      - name: VERIFY - check billing plugin is actually compiled into the APK
+        run: |
+          APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
+          echo "=== Unzipping APK to inspect contents ==="
+          mkdir -p /tmp/apk_check
+          unzip -o "$APK_PATH" -d /tmp/apk_check > /dev/null
+          echo ""
+          echo "=== Searching classes.dex files for billing-related class names ==="
+          FOUND=0
+          for dex in /tmp/apk_check/classes*.dex; do
+            if [ -f "$dex" ]; then
+              if strings "$dex" | grep -qi "cdvpurchase\|BillingClient\|com.android.billingclient"; then
+                echo "FOUND billing-related strings in: $dex"
+                FOUND=1
+              fi
+            fi
+          done
+          if [ "$FOUND" -eq 1 ]; then
+            echo ""
+            echo "PASS: Billing plugin native code IS compiled into this APK."
+          else
+            echo ""
+            echo "FAIL: No billing-related classes found in the APK. The plugin did NOT get compiled in correctly."
+          fi
+          echo ""
+          echo "=== Checking AndroidManifest.xml inside the built APK for BILLING permission ==="
+          if command -v aapt2 >/dev/null 2>&1; then
+            aapt2 dump badging "$APK_PATH" | grep -i "billing" || echo "BILLING permission not found via aapt2 dump."
+          else
+            echo "aapt2 not available in this runner, skipping manifest permission dump."
+          fi
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
