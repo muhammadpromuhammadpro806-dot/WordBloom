@@ -1,0 +1,297 @@
+name: Build WordBloom APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: |
+          rm -rf $ANDROID_HOME/platforms/android-35
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install In-App Purchases plugin
+        run: npm install capacitor-plugin-cdv-purchase --legacy-peer-deps
+
+      - name: Setup www
+        run: |
+          mkdir -p www
+          if [ -f "index.html" ]; then
+            echo "Found index.html - using it directly."
+            cp index.html www/index.html
+          else
+            echo "index.html NOT FOUND in repo root. Searching for alternatives..."
+            echo "=== All index*.html files in repo root ==="
+            ls -la index*.html 2>/dev/null || echo "No index*.html files found at all."
+            echo ""
+            echo "=== Full repo root listing for diagnosis ==="
+            ls -la
+            echo ""
+            echo "Attempting to use the most recently modified index-*.html as a fallback..."
+            LATEST=$(ls -t index-*.html 2>/dev/null | head -n 1)
+            if [ -n "$LATEST" ]; then
+              echo "Using fallback file: $LATEST"
+              cp "$LATEST" www/index.html
+            else
+              echo "CRITICAL: No index.html or index-*.html file exists anywhere in repo root. Cannot continue."
+              exit 1
+            fi
+          fi
+
+      - name: VERIFY - prove which index.html content is actually being used
+        run: |
+          echo "=== Git commit info this build is running from ==="
+          git log -1 --format="Commit: %H%nMessage: %s%nDate: %ad"
+          echo ""
+          echo "=== md5 checksum of the actual file used in this build (www/index.html) ==="
+          md5sum www/index.html
+          echo ""
+          echo "=== Checking for the CORRECT fixed shop pricing text ==="
+          if grep -q 'spAmt">500' www/index.html; then
+            echo "PASS: Found correct Bloom Pack amount (500 coins) - this build has the FIX."
+          else
+            echo "FAIL: Did NOT find 500 coins for Bloom Pack - this build is using an OLD or WRONG file!"
+          fi
+          if grep -q 'spAmt">300' www/index.html; then
+            echo "WARNING: Found OLD Bloom Pack amount (300 coins) still present somewhere in this file!"
+          fi
+          echo ""
+          echo "=== Actual Bloom Pack line(s) found in this exact build's www/index.html ==="
+          grep -n "Bloom Pack" -A3 www/index.html || echo "Bloom Pack text not found at all in this file!"
+
+      - name: Remove old android folder
+        run: rm -rf android
+
+      - name: Init Capacitor
+        run: npx cap init WordBloom com.wordbloom.game1 --web-dir www
+
+      - name: Add Android
+        run: npx cap add android
+
+      - name: Generate app icon and splash screen
+        run: |
+          if [ -f "resources/icon.png" ]; then
+            echo "Found logo, generating icons and splash screens..."
+            npm install @capacitor/assets --save-dev
+            npx capacitor-assets generate --android
+          else
+            echo "No resources/icon.png found - skipping, app will use default Capacitor icon."
+            echo "To add a custom icon: commit a 1024x1024px PNG to resources/icon.png in the repo root."
+          fi
+
+      - name: Fix AndroidManifest - INTERNET, network config, AdMob, Billing permission
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          echo "=== Manifest before ==="
+          cat "$MANIFEST"
+
+          if ! grep -q "android.permission.INTERNET" "$MANIFEST"; then
+            sed -i '/<manifest /a\    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' "$MANIFEST"
+          fi
+
+          # Required for Google Play Billing - without this permission the
+          # In-App Purchases plugin cannot open the Play Store payment sheet
+          if ! grep -q "com.android.vending.BILLING" "$MANIFEST"; then
+            sed -i '/<manifest /a\    <uses-permission android:name="com.android.vending.BILLING" />' "$MANIFEST"
+          fi
+
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true">
+                  <trust-anchors>
+                      <certificates src="system" />
+                  </trust-anchors>
+              </base-config>
+          </network-security-config>
+          XML
+
+          if ! grep -q "networkSecurityConfig" "$MANIFEST"; then
+            sed -i 's/<application /<application android:networkSecurityConfig="@xml\/network_security_config" android:usesCleartextTraffic="true" /' "$MANIFEST"
+          fi
+
+          # CRITICAL FIX: AdMob native SDK crashes the app on launch if this
+          # meta-data tag is missing. This is the real cause of "opens for a
+          # split second then closes every time" - the app.
+          if ! grep -q "com.google.android.gms.ads.APPLICATION_ID" "$MANIFEST"; then
+            sed -i 's/<\/application>/    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-27011.1.80969867~8845536065" \/>\n    <\/application>/' "$MANIFEST"
+          fi
+
+          echo "=== Manifest after ==="
+          cat "$MANIFEST"
+
+      - name: Sync
+        run: npx cap sync android
+
+      - name: Remove bad Java path
+        run: grep -v "org.gradle.java.home" android/gradle.properties > /tmp/gp.tmp && mv /tmp/gp.tmp android/gradle.properties || true
+
+      - name: Upgrade Android Gradle Plugin to support SDK 35
+        run: |
+          sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.3.0/" android/build.gradle
+          sed -i "s/gradle-[0-9.]*-all/gradle-8.4-all/" android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Force API 35
+        run: |
+          if [ -f "android/variables.gradle" ]; then
+            sed -i "s/compileSdkVersion = .*/compileSdkVersion = 35/" android/variables.gradle
+            sed -i "s/targetSdkVersion = .*/targetSdkVersion = 35/" android/variables.gradle
+            sed -i "s/minSdkVersion = .*/minSdkVersion = 23/" android/variables.gradle
+            cat android/variables.gradle
+          fi
+
+      - name: Bump version code
+        run: |
+          echo "=== Before ==="
+          grep -E "versionCode|versionName" android/app/build.gradle
+          sed -i -E 's/versionCode [0-9]+/versionCode 11/' android/app/build.gradle
+          sed -i -E 's/versionName "[^"]*"/versionName "1.1.8"/' android/app/build.gradle
+          echo "=== After ==="
+          grep -E "versionCode|versionName" android/app/build.gradle
+
+      - name: Use or generate keystore
+        run: |
+          if [ -f "keystore/wordbloom.jks" ]; then
+            echo "Using saved keystore!"
+            cp keystore/wordbloom.jks android/app/wordbloom.jks
+          else
+            echo "Generating new keystore..."
+            mkdir -p keystore
+            keytool -genkey -v \
+              -keystore android/app/wordbloom.jks \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -alias wordbloom \
+              -storetype JKS \
+              -storepass shafiq123 \
+              -keypass shafiq123 \
+              -dname "CN=Muhammad Shafiq, OU=WordBloom, O=WordBloom, L=Lalamusa, ST=Punjab, C=PK"
+            cp android/app/wordbloom.jks keystore/wordbloom.jks
+          fi
+          echo "=== SHA1 ==="
+          keytool -list -v -keystore android/app/wordbloom.jks -storepass shafiq123 2>/dev/null | grep "SHA1:"
+
+      - name: Save keystore to repo
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add keystore/wordbloom.jks
+          if git diff --staged --quiet; then
+            echo "Keystore already committed, nothing new to save."
+          else
+            git commit -m "Save keystore"
+            if ! git push; then
+              echo "FAILED: could not push keystore to repo."
+              echo "This is a CRITICAL failure - without this, the signing key will be lost on the next run."
+              exit 1
+            fi
+            echo "Keystore pushed successfully."
+          fi
+
+      - name: Export upload certificate for Play Console reset request
+        run: |
+          keytool -export -rfc \
+            -keystore android/app/wordbloom.jks \
+            -alias wordbloom \
+            -storepass shafiq123 \
+            -file upload_certificate.pem
+          echo "=== Certificate exported ==="
+          cat upload_certificate.pem
+
+      - name: Add signing config
+        run: |
+          cat >> android/app/build.gradle << 'GRADLE'
+          android.signingConfigs {
+              release {
+                  storeFile = file("wordbloom.jks")
+                  storePassword = "shafiq123"
+                  keyAlias = "wordbloom"
+                  keyPassword = "shafiq123"
+              }
+          }
+          android.buildTypes.release.signingConfig = android.signingConfigs.release
+          GRADLE
+
+      - name: Build Release AAB
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: VERIFY - check billing plugin is actually compiled into the APK
+        run: |
+          APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
+          echo "=== Unzipping APK to inspect contents ==="
+          mkdir -p /tmp/apk_check
+          unzip -o "$APK_PATH" -d /tmp/apk_check > /dev/null
+          echo ""
+          echo "=== Searching classes.dex files for billing-related class names ==="
+          FOUND=0
+          for dex in /tmp/apk_check/classes*.dex; do
+            if [ -f "$dex" ]; then
+              if strings "$dex" | grep -qi "cdvpurchase\|BillingClient\|com.android.billingclient"; then
+                echo "FOUND billing-related strings in: $dex"
+                FOUND=1
+              fi
+            fi
+          done
+          if [ "$FOUND" -eq 1 ]; then
+            echo ""
+            echo "PASS: Billing plugin native code IS compiled into this APK."
+          else
+            echo ""
+            echo "FAIL: No billing-related classes found in the APK. The plugin did NOT get compiled in correctly."
+          fi
+          echo ""
+          echo "=== Checking AndroidManifest.xml inside the built APK for BILLING permission ==="
+          if command -v aapt2 >/dev/null 2>&1; then
+            aapt2 dump badging "$APK_PATH" | grep -i "billing" || echo "BILLING permission not found via aapt2 dump."
+          else
+            echo "aapt2 not available in this runner, skipping manifest permission dump."
+          fi
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: WordBloom-Release-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordbloom-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload certificate for Play Console upload key reset
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload_certificate
+          path: upload_certificate.pem
